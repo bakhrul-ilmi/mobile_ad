@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.abilm_000.activitydetection.ReadAccelerometer">
+    <item
+        android:id="@+id/action_classify"
+        android:orderInCategory="100"
+        android:title="Detection"
+        app:showAsAction="never" />
+</menu>
