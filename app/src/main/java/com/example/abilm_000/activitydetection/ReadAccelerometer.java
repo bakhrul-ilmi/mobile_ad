@@ -165,12 +165,17 @@ public class ReadAccelerometer extends AppCompatActivity implements SensorEventL
             @Override
             public void onClick(View v) {
                 CheckBox newCsv = (CheckBox) findViewById(R.id.checkBox);
+                String data = "MeanX;MeanY;MeanZ;StdDevX;StdDevY;StdDevZ;MaxX;MaxY;MaxZ;MinX;MinY;MinZ;Class";
                 if(newCsv.isChecked()){
-                    String data = "MeanX;MeanY;MeanZ;StdDevX;StdDevY;StdDevZ;MaxX;MaxY;MaxZ;MinX;MinY;MinZ;Class";
                     try
                     {
                         writer = new CSVWriter(new FileWriter("/sdcard/acc.csv"),',');
                         String[] entries = data.split(";"); // array of your values
+                        writer.writeNext(entries);
+                        writer.close();
+
+                        writer = new CSVWriter(new FileWriter("/sdcard/template.csv"),',');
+                        entries = data.split(";"); // array of your values
                         writer.writeNext(entries);
                         writer.close();
                     } catch (IOException e)
@@ -178,6 +183,7 @@ public class ReadAccelerometer extends AppCompatActivity implements SensorEventL
                         e.printStackTrace();
                     }
                 }
+
                 if(stopped == false){
                     Toast.makeText(ReadAccelerometer.this,
                             "Stop Creating Dataset : " + radioButton.getText(), Toast.LENGTH_SHORT).show();

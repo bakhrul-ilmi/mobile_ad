@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import weka.classifiers.Classifier;
+import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.lazy.IBk;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -52,9 +53,10 @@ public class Classify extends AppCompatActivity implements SensorEventListener{
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private Instances data;
+    private Instances dataTrain, dataTest;
     private Classifier knn;
     private ArrayList<String> kelas;
+    private NaiveBayes bayes;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,19 +83,36 @@ public class Classify extends AppCompatActivity implements SensorEventListener{
         X = new ArrayList<Float>();
         Y = new ArrayList<Float>();
         Z = new ArrayList<Float>();
-        knn = new IBk(4);
+        bayes = new NaiveBayes();
+        knn = new IBk();
         try{
             ConverterUtils.DataSource source = new ConverterUtils.DataSource("/sdcard/acc.csv");
-            data = source.getDataSet();
-            if (data.classIndex() == -1)
-                data.setClassIndex(data.numAttributes() - 1);
-            knn.buildClassifier(data);
+            dataTrain = source.getDataSet();
+            if (dataTrain.classIndex() == -1)
+                dataTrain.setClassIndex(dataTrain.numAttributes() - 1);
+            knn.buildClassifier(dataTrain);
+            bayes.buildClassifier(dataTrain);
+            Log.d("h", String.valueOf(dataTrain.classIndex()));
+            Log.d("i", String.valueOf(dataTrain.numAttributes()));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Attribute att = data.classAttribute();
-        for(int i = 0; i < data.numClasses();i++) {
+
+        try {
+            ConverterUtils.DataSource source = new ConverterUtils.DataSource("/sdcard/template.csv");
+            dataTest = source.getDataSet();
+            if (dataTest.classIndex() == -1)
+                dataTest.setClassIndex(dataTest.numAttributes() - 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Attribute att = dataTrain.classAttribute();
+        for(int i = 0; i < dataTrain.numClasses();i++) {
             Log.d("g",att.value(i));
+        }
+        for(int i = 0 ; i < dataTrain.numAttributes();i++){
+            Log.d("j", dataTrain.attribute(i).name());
         }
         addListenerOnButton();
     }
@@ -155,20 +174,42 @@ public class Classify extends AppCompatActivity implements SensorEventListener{
                     stdY += (Y.get(j) - meanY) * (Y.get(j) - meanY);
                     stdZ += (Z.get(j) - meanZ) * (Z.get(j) - meanZ);
                 }
-                Collections.max(X);
                 stdDevX = (float) Math.sqrt(stdX / (window - 1));
                 stdDevY = (float) Math.sqrt(stdY / (window - 1));
                 stdDevZ = (float) Math.sqrt(stdZ / (window - 1));
                 double[] val = new double[] { meanX, meanY, meanZ,stdDevX, stdDevY, stdDevZ,Collections.max(X)
-                        , Collections.max(Y), Collections.max(Z), Collections.min(X),  Collections.min(Y), Collections.min(Z)};
-                Instance instance = new DenseInstance(12, val);
+                        , Collections.max(Y), Collections.max(Z), Collections.min(X),  Collections.min(Y), Collections.min(Z),-1};
+                Instance instance = new DenseInstance(1.0, val);
+                dataTest.add(instance);
+                dataTest.setClassIndex(dataTest.numAttributes() - 1);
+                double[] aktivitas1 = new double[]{};
+//                double[] aktivitas2 = new double[]{};
                 try {
-                    aktivitas = knn.classifyInstance(instance);
+                    aktivitas1 = knn.distributionForInstance(dataTest.lastInstance());
+//                    aktivitas2 = bayes.distributionForInstance(dataTest.lastInstance());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                Log.d("akt",String.valueOf(aktivitas));
-                tvHasil.setText(data.classAttribute().value((int)aktivitas));
+                double max1 = 0;
+                int maxIndex1 = 0;
+
+                for(int i=0; i < aktivitas1.length; i++){
+                    if(aktivitas1[i] > max1){
+                        maxIndex1 = i;
+                        max1 = aktivitas1[i];
+                    }
+                }
+//                double max2 = 0;
+//                int maxIndex2 = 0;
+//                for(int i=0; i < aktivitas1.length; i++){
+//                    if(aktivitas1[i] > max2){
+//                        maxIndex2 = i;
+//                        max2 = aktivitas1[i];
+//                    }
+//                }
+                Log.d("Hasil Classify", String.valueOf(maxIndex1));
+                aktivitas = maxIndex1;
+                tvHasil.setText(dataTrain.classAttribute().value((int)maxIndex1));
                 X.clear();
                 Y.clear();
                 Z.clear();
